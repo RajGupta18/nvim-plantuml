@@ -2,7 +2,7 @@ local M = {}
 
 --- @class PlantumlOpts
 --- @field output_dir string
---- @field view string
+--- @field viewer string
 --- @field auto_refresh boolean
 
 local config = require("plantuml.config")
@@ -11,7 +11,7 @@ local config = require("plantuml.config")
 --- @param opts PlantumlOpts
 M.setup = function(opts)
 	config.output_dir = opts.output_dir or config.output_dir
-	config.view = opts.view or config.view
+	config.viewer = opts.viewer or config.viewer
 	config.auto_refresh = opts.auto_refresh or config.auto_refresh
 end
 
