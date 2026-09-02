@@ -31,22 +31,51 @@ A Neovim plugin for creating, rendering, and previewing UML diagrams directly fr
      ```
 
 3. **Neovim**:
-   - Requires Neovim 0.8+ with Lua support.
+   - Requires Neovim 0.10+ with Lua support.
+
+4. 3rd/image.nvim 
+  - link [3rd/image.nvim](https://github.com/3rd/image.nvim/tree/master)
+  - minimal configuration required
+	```lua
+	return {
+	  {
+		"3rd/image.nvim",
+		build = false, -- so that it doesn't build the rock https://github.com/3rd/image.nvim/issues/91#issuecomment-2453430239
+		opts = {
+		  processor = "magick_cli",
+		},
+	  },
+	}
+	```
+
 
 ### Plugin Installation
 
-Using [packer.nvim](https://github.com/wbthomason/packer.nvim):
+Using [LazyVim](https://www.lazyvim.org/configuration/plugins):
 
 ```lua
-use {
-    'Maduki-tech/nvim-plantuml',
+return {
+  {
+    "RajGupta18/nvim-plantuml",
+	branch = "dev-raj",
+    requires = { '3rd/image.nvim' },
+	ft = "plantuml",
+	init = function ()
+		vim.filetype.add({
+		extension = {
+		  puml = "plantuml"
+		},
+	  })
+	end,
     config = function()
-        require('plantuml').setup({
-            output_dir = '/tmp',
-            viewer = 'open',
-            auto_refresh = true,
-        })
-    end
+      require("plantuml").setup({
+        output_dir = "/tmp",					-- Directory to store rendered diagrams
+        viewer = "gwenview",					-- External Image Viewer, used only when preview_mode = 'external'
+        auto_refresh = true,					-- Enable/Disable auto-refresh on save
+		preview_mode = "nvim"					-- `nvim` (default for inbuilt preview) or `external`
+      })
+    end,
+  },
 }
 ```
 
@@ -83,7 +112,8 @@ If no configuration is provided, the following defaults are used:
 
 | Command             | Description                                      |
 |---------------------|--------------------------------------------------|
-| `:PlantUMLPreview`  | Render and preview the current `.puml` file.     |
+| `:PlantUML preview`  | Render and preview the current `.puml` file.     |
+| :PlantUML export <format> | Render and export the current .puml file with supported format png/svg | 
 
 ### Workflow
 1. Open or create a `.puml` file in Neovim:
@@ -94,7 +124,7 @@ If no configuration is provided, the following defaults are used:
    @enduml
    ```
 
-2. Run the `:PlantUMLPreview` command to render and preview the diagram.
+2. Run the `:PlantUML preview` command to render and preview the diagram.
 3. Save the file (`:w`) to trigger auto-refresh (if enabled).
 
 ---
@@ -114,7 +144,7 @@ If no configuration is provided, the following defaults are used:
 
 ### Long-Term Goals
 - [ ] Interactive UML editing directly within Neovim.
-- [ ] Real-time rendering as you type.
+- [x] Real-time rendering as you type.
 - [ ] Syntax highlighting for `.puml` files.
 - [ ] Integration with external diagram storage services.
 
