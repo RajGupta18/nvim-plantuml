@@ -46,7 +46,10 @@ local function render(callback)
 	vim.system({ "plantuml", "-tpng", input }, { text = true }, function(result)
 		vim.schedule(function()
 			if result.code ~= 0 or vim.fn.filereadable(png) ~= 1 then
-				notify(result.stderr ~= "" and result.stderr or "PlantUML failed to render the diagram", vim.log.levels.ERROR)
+				notify(
+					result.stderr ~= "" and result.stderr or "PlantUML failed to render the diagram",
+					vim.log.levels.ERROR
+				)
 				return
 			end
 			callback(png)
@@ -54,19 +57,50 @@ local function render(callback)
 	end)
 end
 
+local preview_state = {
+	win = nil,
+	buf = nil,
+	img = nil,
+}
+
 local function preview_with_snacks(png)
-	local ok, snacks = pcall(require, "snacks")
+	local ok, image = pcall(require, "image")
 	if not ok then
-		notify("snacks.nvim with snacks.image enabled is required for split previews", vim.log.levels.ERROR)
-		return
-	end
-	if not snacks.image.supports(png) then
-		notify("snacks.image cannot render PNGs in this terminal; run :checkhealth snacks", vim.log.levels.ERROR)
+		notify("image.nvim enabled is required for split previews", vim.log.levels.ERROR)
 		return
 	end
 
-	vim.cmd("vsplit")
-	vim.cmd.edit(vim.fn.fnameescape(png))
+	if not preview_state.win or not vim.api.nvim_win_is_valid(preview_state.win) then
+		-- Create a new vertical split with an empty buffer
+		vim.cmd("rightbelow vnew")
+
+		preview_state.buf = vim.api.nvim_get_current_buf()
+		preview_state.win = vim.api.nvim_get_current_win()
+		vim.bo[preview_state.buf].buftype = "nofile"
+		vim.bo[preview_state.buf].bufhidden = "wipe"
+		vim.bo[preview_state.buf].swapfile = false
+		vim.bo[preview_state.buf].modifiable = false
+		vim.api.nvim_buf_set_name(preview_state.buf, "PlantUML Preview")
+	end
+
+	-- Remove previous image
+	if preview_state.img then
+		preview_state.img:clear()
+		preview_state.img = nil
+	end
+
+	-- Render image in this buffer/window
+	preview_state.img = image.from_file(png, {
+		window = preview_state.win,
+		buffer = preview_state.buf,
+		with_virtual_padding = true,
+	})
+	if not preview_state.img then
+		notify("Failed to load image: " .. png, vim.log.levels.ERROR)
+		return
+	end
+
+	preview_state.img:render()
 end
 
 local function preview(png)
@@ -78,7 +112,7 @@ local function preview(png)
 end
 
 function M.preview()
-	if not isPumlFile()() then
+	if not isPumlFile() then
 		notify("Only .puml files are supported", vim.log.levels.ERROR)
 		return
 	end
