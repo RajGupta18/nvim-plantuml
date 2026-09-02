@@ -1,16 +1,17 @@
 local config = require("plantuml.config")
 
---- @enum PlantumlExportType
+--- @dict PlantumlExportType
 local PlantumlExportType = {
-	png = "png",
-	svg = "svg",
+	"png",
+	"svg",
 }
 
 local M = {}
 
+M.exportType = PlantumlExportType
+
 local function isPumlFile()
-	local bufname = vim.api.nvim_buf_get_name(0)
-	return bufname:match("%.puml")
+	return vim.fn.expand("%:e") == "puml"
 end
 
 local function renderAndPreview()
@@ -22,7 +23,6 @@ local function renderAndPreview()
 	local buf = vim.api.nvim_get_current_buf()
 	local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 	local uml_file = config.output_dir .. "/diagram.puml"
-	local output_file = config.output_dir .. "/diagram.png"
 
 	local uml = table.concat(lines, "\n")
 	local file = io.open(uml_file, "w")
@@ -37,7 +37,7 @@ local function renderAndPreview()
 	local cmd = string.format("plantuml -tpng %s -o %s", uml_file, config.output_dir)
 	os.execute(cmd)
 
-	os.execute(string.format("%s %s", config.viewer, output_file))
+	os.execute(string.format("%s %s", config.viewer, config.output_dir))
 end
 
 M.preview = function()
@@ -58,7 +58,7 @@ M.preview = function()
 	end
 end
 
---- @param type PlantumlExportType
+--- @param type string
 M.export = function(type)
 	if not isPumlFile() then
 		vim.notify("Only `.puml` file is supportet for now", vim.log.levels.ERROR, {})
@@ -76,7 +76,7 @@ M.export = function(type)
 		local cmd = string.format("plantuml -tpng %s", file)
 		os.execute(cmd)
 	elseif type == "svg" then
-		local cmd = string.format("plantuml -tpng %s", file)
+		local cmd = string.format("plantuml -tsvg %s", file)
 		os.execute(cmd)
 	end
 end

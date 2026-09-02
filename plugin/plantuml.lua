@@ -5,13 +5,10 @@ local plantuml_commands = {
 		renderer.preview()
 	end,
 	export = function(args)
-		--- @type PlantumlExportType
 		local format = args[1] or "png"
 		renderer.export(format)
 	end,
 }
-
-local export_formats = { "png", "svg" }
 
 vim.api.nvim_create_user_command("PlantUML", function(opts)
 	local subcommand = opts.fargs[1]
@@ -30,7 +27,7 @@ end, {
 		if #args == 2 then
 			return { "preview", "export" }
 		elseif #args == 3 and args[2] == "export" then
-			return export_formats
+			return renderer.exportType
 		end
 		return {}
 	end,
